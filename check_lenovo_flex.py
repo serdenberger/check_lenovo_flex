@@ -19,23 +19,26 @@
 # 
 # This script will check the status of a remote Lenovo Enterprise Flex Chassis
 # orginal file check_ibm_bladecenter.py renamed and modified by Silvio Erdenberger, 
+# version 1.2
+# changes 
+# * renamed --snmp-password to --snmp_apassword
+# * fix a wrong validation of Authentication password in the options parameter
+# * fix some typo in the help
+# 
+# version 1.1
 # serdenberger@lenovo.com 17.11.2017
 # change filename to check_lenovo_flex.py
 # there are several changes to the IBM Bladecenter, whic are not compatible
 # changes in version 1.1
 # * add possibility to a Privacy Password for authPriv in snmp_security_level
-# * equired paramater depending on --snmp_security_level
-# * add 
-# *
-# *
-# *
-# *
+# * required parameter depending on --snmp_security_level
+# * add authentication encryption and password
+# * add privacy encryption and password
 #
 # powermodules
 #
 # system-health -> adjust to flex chassis
 #  if no error, the error oid don't exist
-#  
 #
 # temperature -> no change
 #
@@ -45,13 +48,12 @@
 #
 # blowers -> expand the blowers to 10 (fans)
 #  
-#
 # switchmodules
 #  
 
 
 # No real need to change anything below here
-version="1.1"
+version="1.2"
 ok=0
 warning=1
 critical=2
@@ -104,10 +106,10 @@ parser.add_option("-u","--snmp_username", dest="snmp_username",
 	help="SNMP username (only with SNMP v3)", default=None)
 parser.add_option("-C","--snmp_community", dest="snmp_community",
 	help="SNMP Community (only with SNMP v1|v2c)", default=None)
-parser.add_option("-p","--snmp_password", dest="snmp_password",
-	help="SNMP password (only with SNMP v3)", default=None)
+parser.add_option("-p","--snmp_apassword", dest="snmp_apassword",
+	help="SNMP authentication password (only with SNMP v3)", default=None)
 parser.add_option("-a","--snmp_aprotocol", dest="snmp_aprotocol",
-	help="SNMP authenthication protocol SHA (only with SNMP v3)", default=None)
+	help="SNMP authentication protocol (SHA only with SNMP v3)", default=None)
 parser.add_option("-x","--snmp_ppassword", dest="snmp_ppassword",
 	help="SNMP privacy password (only with SNMP v3)", default=None)
 parser.add_option("-X","--snmp_pprotocol", dest="snmp_pprotocol",
@@ -137,22 +139,24 @@ def set_snmp_options():
 			parser.error("--snmp_username required with --snmp_version=3")
 		if opts.snmp_seclevel is None:
 			parser.error("--snmp_security_level required with --snmp_version=3")
-		if opts.snmp_password is None:
-			parser.error("--snmp_password required with --snmp_version=3")
 		if opts.snmp_seclevel == "noAuthNoPriv":
 			snmp_options = snmp_options + " -l %s -u %s " % (opts.snmp_seclevel,opts.snmp_username)
 		if opts.snmp_seclevel == "authNoPriv":
+			if opts.snmp_apassword is None:
+				parser.error("--snmp_apassword required with --snmp_version=3")
 			if opts.snmp_aprotocol is None:
 				parser.error("--snmp_aprotocol required with --snmp_version=3")
-			snmp_options = snmp_options + " -l %s -u %s -a %s -A %s " % (opts.snmp_seclevel,opts.snmp_username,opts.snmp_aprotocol,opts.snmp_password)
+			snmp_options = snmp_options + " -l %s -u %s -a %s -A %s " % (opts.snmp_seclevel,opts.snmp_username,opts.snmp_aprotocol,opts.snmp_apassword)
 		if opts.snmp_seclevel == "authPriv":
 			if opts.snmp_pprotocol is None:
 				parser.error("--snmp_pprotocol required with --snmp_version=3")
 			if opts.snmp_ppassword is None:
 				parser.error("--snmp_ppassword required with --snmp_version=3")
+			if opts.snmp_apassword is None:
+				parser.error("--snmp_apassword required with --snmp_version=3")
 			if opts.snmp_aprotocol is None:
 				parser.error("--snmp_aprotocol required with --snmp_version=3")
-			snmp_options = snmp_options + " -l %s -u %s -a %s -A %s -x %s -X %s " % (opts.snmp_seclevel,opts.snmp_username,opts.snmp_aprotocol,opts.snmp_password,opts.snmp_pprotocol,opts.snmp_ppassword)
+			snmp_options = snmp_options + " -l %s -u %s -a %s -A %s -x %s -X %s " % (opts.snmp_seclevel,opts.snmp_username,opts.snmp_aprotocol,opts.snmp_apassword,opts.snmp_pprotocol,opts.snmp_ppassword)
 	else:
 		if opts.snmp_community is None:
 			parser.error("--snmp_community is required with --snmp_version=1|2c")
