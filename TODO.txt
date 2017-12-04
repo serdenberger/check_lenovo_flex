@@ -1,0 +1,10 @@
+Silvio Erdenberger
+04.12.2017
+wishlist
+* learn better python programming (i'm a beginner)
+* create a example for the output of the script
+* explain the snmpv3 user creation in the CMM
+* including the dependencies with the Lenovo xClarity Administrator
+* maybe with onecli and/or asu
+
+* waiting for feedback from users
