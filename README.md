@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-About this script
+About this script for flex chassis
 
 This script will check the status of a remote Lenovo Enterprise Flex Chassis
 orginal file check_ibm_bladecenter.py renamed and modified by Silvio Erdenberger,
