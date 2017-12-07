@@ -19,6 +19,13 @@
 # 
 # This script will check the status of a remote Lenovo Enterprise Flex Chassis
 # orginal file check_ibm_bladecenter.py renamed and modified by Silvio Erdenberger, 
+#
+# version 1.3
+# fixes
+# * fix wrong compares in blowers
+# changes
+# * rewrite the check_blowers
+#
 # version 1.2
 # changes 
 # * renamed --snmp-password to --snmp_apassword
@@ -53,15 +60,13 @@
 
 
 # No real need to change anything below here
-version="1.2"
+version="1.3"
 ok=0
 warning=1
 critical=2
 unknown=3 
 not_present = -1 
 exit_status = -1
-
-
 
 state = {}
 state[not_present] = "Not Present"
@@ -70,21 +75,15 @@ state[warning] = "Warning"
 state[critical] = "Critical"
 state[unknown] = "Unknown"
 
-
 longserviceoutput="\n"
 perfdata=""
 summary=""
 sudo=False
 
-
 from sys import exit
 from sys import argv
 from os import getenv,putenv,environ
 import subprocess
-
-
-
-
 
 
 # Parse some Arguments
@@ -274,10 +273,7 @@ def getTable(base_oid):
 
 def check_powermodules():
 	powermodules = getTable('1.3.6.1.4.1.2.3.51.2.2.4')
-	index = 1
-	exists = 2
-	status = 3
-	details = 4
+	index,exists,status,details = (1,2,3,4)
 	num_ok = 0
 	for i in powermodules.values():
 		myIndex = i[index]
@@ -293,8 +289,7 @@ def check_powermodules():
 		add_long('Powersupply "%s" status "%s". %s. ' % (myIndex,myStatus,myDetails) )
 	add_summary( "%s out of %s powermodules are healthy" % (num_ok, len(powermodules) ) )
 	add_perfdata( "'Number of powermodules'=%s" % (len(powermodules) ) )
-	
-		
+			
 	nagios_status(ok)
 
 def check_switchmodules():
@@ -330,140 +325,46 @@ def check_switchmodules():
 
 def check_blowers():
 	" Check blower status "
+                            #BASE OID
+                            #          #CMM OID
+                            #          #           #BLOWER OID
 	blowers = getTable("1.3.6.1.4.1.2.3.51.2.2.3.50")
+	chassisFanIndex,chassisFanId,chassisFanSpeed,chassisFanState,chassisFanSpeedRPM,chassisFanControllerState,chassisFanCoolingZone = (1,2,3,4,5,6,7)
+	for i in blowers.values():
+		mychassisFanSpeedRPM = i[chassisFanSpeedRPM] 
+		mychassisFanSpeedRPM = mychassisFanSpeedRPM.split(None,1)[0] 
+		add_long( "Blower %s state=%s speed=%s" % (i[chassisFanIndex],i[chassisFanState],i[chassisFanSpeedRPM]) )
+		add_perfdata("Blower%s=%s" %(i[chassisFanIndex],mychassisFanSpeedRPM ))
 
-	# This mib only seems to support 10 blowers. 
-	blower1speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.1")
-	blower1state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.1")
-	
-	blower2speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.2")
-	blower2state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.2")
-	
-	blower3speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.3")
-	blower3state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.3")
-	
-	blower4speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.4")
-	blower4state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.4")
-	
-	blower5speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.5")
-	blower5state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.5")
-	
-	blower6speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.6")
-	blower6state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.6")
-	
-	blower7speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.7")
-	blower7state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.7")
-	
-	blower8speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.8")
-	blower8state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.8")
-	
-	blower9speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.9")
-	blower9state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.9")
-	
-	blower10speed = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.5.10")
-	blower10state = snmpget("1.3.6.1.4.1.2.3.51.2.2.3.50.1.4.10")
-	
-	add_long( "Blower 1 state=%s speed=%s" % (blower1state,blower1speed) )
-	add_long( "Blower 2 state=%s speed=%s" % (blower2state,blower2speed) )
-	add_long( "Blower 3 state=%s speed=%s" % (blower3state,blower3speed) )
-	add_long( "Blower 4 state=%s speed=%s" % (blower4state,blower4speed) )
-	add_long( "Blower 5 state=%s speed=%s" % (blower5state,blower5speed) )
-	add_long( "Blower 6 state=%s speed=%s" % (blower6state,blower6speed) )
-	add_long( "Blower 7 state=%s speed=%s" % (blower7state,blower7speed) )
-	add_long( "Blower 8 state=%s speed=%s" % (blower8state,blower8speed) )
-	add_long( "Blower 8 state=%s speed=%s" % (blower9state,blower9speed) )
-	add_long( "Blower 10 state=%s speed=%s" % (blower10state,blower10speed) )
-	add_perfdata("blower1=%s" %(blower1speed.split(None,1)[0] ))
-	add_perfdata("blower2=%s" %(blower2speed.split(None,1)[0] ))
-	add_perfdata("blower3=%s" %(blower3speed.split(None,1)[0] ))
-	add_perfdata("blower4=%s" %(blower4speed.split(None,1)[0] ))
-	add_perfdata("blower5=%s" %(blower5speed.split(None,1)[0] ))
-	add_perfdata("blower6=%s" %(blower6speed.split(None,1)[0] ))
-	add_perfdata("blower7=%s" %(blower7speed.split(None,1)[0] ))
-	add_perfdata("blower8=%s" %(blower8speed.split(None,1)[0] ))
-	add_perfdata("blower9=%s" %(blower9speed.split(None,1)[0] ))
-	add_perfdata("blower10=%s" %(blower10speed.split(None,1)[0] ))
-	# Check blower 1
-	if blower1state == "1":
-		nagios_status(ok)
-		add_summary("Blower1 OK. " )
-	else:
-		add_summary("Blower1 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 2
-	if blower2state == "1":
-		nagios_status(ok)
-		add_summary("Blower2 OK. " )
-	else:
-		add_summary("Blower2 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 3
-	if blower3state == "1":
-		nagios_status(ok)
-		add_summary("Blower3 OK. " )
-	else:
-		add_summary("Blower3 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 4
-	if blower4state == "1":
-		nagios_status(ok)
-		add_summary("Blower4 OK. " )
-	else:
-		add_summary("Blower4 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 5
-	if blower5state == "1":
-		nagios_status(ok)
-		add_summary("Blower5 OK. " )
-	else:
-		add_summary("Blower5 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 6
-	if blower6state == "1":
-		nagios_status(ok)
-		add_summary("Blower6 OK. " )
-	else:
-		add_summary("Blower6 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 7
-	if blower7state == "1":
-		nagios_status(ok)
-		add_summary("Blower7 OK. " )
-	else:
-		add_summary("Blower7 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 8
-	if blower8state == "1":
-		nagios_status(ok)
-		add_summary("Blower8 OK. " )
-	else:
-		add_summary("Blower8 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 9
-	if blower9state == "1":
-		nagios_status(ok)
-		add_summary("Blower9 OK. " )
-	else:
-		add_summary("Blower9 NOT OK. ")
-		nagios_status(warning)
-	
-	# Check blower 10
-	if blower10state == "1":
-		nagios_status(ok)
-		add_summary("Blower10 OK. " )
-	else:
-		add_summary("Blower10 NOT OK. ")
-		nagios_status(warning)
-	
-	if blower1state != "1" and blower2state != "1" and blower3state != "1" and blower4state != "1" and blower5state != "1" and blower6state != "1" and blower7state != "1" and blower8state != "1" and blower9state != "1" and blower10state != "1":
+		# Check blower i
+		if i[chassisFanState] == "1":
+			nagios_status(ok)
+#			add_long("Blower%s OK. " % i[chassisFanIndex])
+		else:
+			add_summary("Blower%s NOT OK. " % i[chassisFanIndex])
+			nagios_status(warning)
+#	print "bl : %s " % blowers[1][chassisFanSpeed]
+#	print "bl 1 2 3 4: %s %s %s %s " % (blowers[1][chassisFanState],blowers[2][chassisFanState],blowers[3][chassisFanState],blowers[4][chassisFanState])
+#	print "bl 6 7 8 9: %s %s %s %s " % (blowers[6][chassisFanState],blowers[7][chassisFanState],blowers[8][chassisFanState],blowers[9][chassisFanState])
+#	print "bl 5 10: %s %s " % (blowers[5][chassisFanState],blowers[10][chassisFanState])
+	num_ok = 0
+#	num_ok = 2
+	for i in range(1,5):
+		if blowers[i][chassisFanState] != "1":
+			num_ok = num_ok + 1
+	if num_ok > 1:
+		add_summary("FanCoolingZone%s NOT OK. " % blowers[i][chassisFanCoolingZone])
+		nagios_status(critical)
+	num_ok = 0
+#	num_ok = 2
+	for i in range(6,9):
+		if blowers[i][chassisFanState] != "1":
+			num_ok = num_ok + 1
+        if num_ok > 1:
+		add_summary("FanCoolingZone%s NOT OK. " % blowers[i][chassisFanCoolingZone])
+                nagios_status(critical)
+	if blowers[6][chassisFanState] != "1" and blowers[10][chassisFanState] != "1":
+		add_summary("FanCoolingZone 3 and 4 NOT OK. ")
 		nagios_status(critical)
 	
 
@@ -501,7 +402,6 @@ def check_chassis_status():
 	bistMediaTrayInstalled = 74
 	bistPowerModulesInstalled = 81
 	bistSwitchModulesInstalled = 97
-	
 	bistSwitchModulesCommunicating = 113
 	bistBladesCommunicating = 49
 	bistMediaTrayCommunicating = 75
@@ -527,7 +427,7 @@ def check_chassis_status():
 		nagios_status(warning)
 		add_summary( "PowerModules NOT OK. " )
 	
-	# Check SwitcModule Communications
+	# Check SwitchModule Communications
 	if not oids.has_key(bistSwitchModulesCommunicating) or not oids.has_key(bistSwitchModulesInstalled):
 		add_summary( "SwitchModules N/A. ")
 	if oids[bistSwitchModulesCommunicating] == oids[bistSwitchModulesInstalled]:
@@ -580,7 +480,6 @@ def check_chassis_status():
 def check_bladehealth():
 	blades = getTable('1.3.6.1.4.1.2.3.51.2.22.1.5.2.1')
 	bladestate = getTable('1.3.6.1.4.1.2.3.51.2.22.1.5.1.1').values()
-	
 	index,bladeid,severity,description = (1,2,3,4)
 	good_blades = 0
 	total_blades = 0
@@ -605,6 +504,7 @@ def check_bladehealth():
 		nagios_status(ok)
 	else:
 		nagios_status(warning)
+
 def check_systemhealth():
 	systemhealthstat = snmpget('1.3.6.1.4.1.2.3.51.2.2.7.1.0')
 	index,severity,description,date = (1,2,3,4)
