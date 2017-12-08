@@ -19,26 +19,55 @@ About this script for flex chassis
 
 This script will check the status of a remote Lenovo Enterprise Flex Chassis
 orginal file check_ibm_bladecenter.py renamed and modified by Silvio Erdenberger,
+serdenberger [AT] lenovo [POINT] com
 
 version 1.3
-fixes
-* fix wrong compares in blowers for critical status
-changes
-* rewrite the check_blowers
+ 8.12.2017
+ adding
+  * add coolingzone feature
+
+ fixes
+  * fix wrong compares in fans (fans)
+
+ changes
+  * rewrite the check_fans
 
 version 1.2
-changes
-* renamed --snmp-password to --snmp_apassword
-* fix a wrong validation of Authentication password in the options parameter
-* fix some typo in the help
+ 30.11.2017
+ changes
+  * renamed --snmp-password to --snmp_apassword
+  * fix a wrong validation of Authentication password in the options parameter
+  * fix some typo in the help
 
 version 1.1
-serdenberger@lenovo.com 17.11.2017
-change filename to check_lenovo_flex.py
-there are several changes to the IBM Bladecenter, whic are not compatible
-changes in version 1.1
-* add possibility to a Privacy Password for authPriv in snmp_security_level
-* required parameter depending on --snmp_security_level
-* add authentication encryption and password
-* add privacy encryption and password
+ 17.11.2017
+ change filename to check_lenovo_flex.py
+ there are several changes to the IBM Bladecenter, whic are not compatible
+ changes in version 1.1
+  * add possibility to a Privacy Password for authPriv in snmp_security_level
+  * required parameter depending on --snmp_security_level
+  * add authentication encryption and password
+  * add privacy encryption and password
+
+Following modes are implemented:
+
+* powermodules
+
+* system-health -> adjust to flex chassis
+	if no error, the error oid don't exist
+
+* temperature -> no change
+
+* chassis-status to flex adjusted
+
+* bladehealth
+
+* fans -> adjust to flex chassis
+
+* coolingzones
+	implemented on fan based devices
+	 TODO change the OID ChassisCoolingZone
+	 but some issues appear
+
+* switchmodules
 

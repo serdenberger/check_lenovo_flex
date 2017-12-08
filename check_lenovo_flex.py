@@ -21,19 +21,26 @@
 # orginal file check_ibm_bladecenter.py renamed and modified by Silvio Erdenberger, 
 #
 # version 1.3
+# 8.12.2017
+# adding
+# * add coolingzone feature 
+#
 # fixes
-# * fix wrong compares in blowers
+# * fix wrong compares in fans (fans)
+#
 # changes
-# * rewrite the check_blowers
+# * rewrite the check_fans
+#
 #
 # version 1.2
+# 30.11.2017
 # changes 
 # * renamed --snmp-password to --snmp_apassword
 # * fix a wrong validation of Authentication password in the options parameter
 # * fix some typo in the help
 # 
 # version 1.1
-# serdenberger@lenovo.com 17.11.2017
+# 17.11.2017
 # change filename to check_lenovo_flex.py
 # there are several changes to the IBM Bladecenter, whic are not compatible
 # changes in version 1.1
@@ -53,7 +60,12 @@
 #
 # bladehealth
 #
-# blowers -> expand the blowers to 10 (fans)
+# fans -> adjust to flex chassis
+#
+# coolingzones 
+# implemented on fan based devices
+# TODO change the OID ChassisCoolingZone
+# but some issues appear
 #  
 # switchmodules
 #  
@@ -90,7 +102,7 @@ import subprocess
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-m","--mode", dest="mode",
-	help="Which check mode is in use (powermodules,system-health,temperature,chassis-status,bladehealth,blowers,switchmodules)")
+	help="Which check mode is in use (powermodules,system-health,temperature,chassis-status,bladehealth,fans,switchmodules,coolingzones)")
 parser.add_option("-H","--host", dest="host",
 	help="Hostname or IP address of the host to check")
 parser.add_option("-w","--warning", dest="warning_threshold",
@@ -272,6 +284,11 @@ def getTable(base_oid):
 	return myTable
 
 def check_powermodules():
+                                 #BASE OID
+				 #               #SUPPORT PROCESSOR
+                                 #               #  #CMM OID
+				 #               #  # #MONITORS
+                                 #               #  # # #POWER MOD
 	powermodules = getTable('1.3.6.1.4.1.2.3.51.2.2.4')
 	index,exists,status,details = (1,2,3,4)
 	num_ok = 0
@@ -293,6 +310,10 @@ def check_powermodules():
 	nagios_status(ok)
 
 def check_switchmodules():
+                                  #BASE OID
+                                  #                  #CMM
+				  #                  #  #COMPONENTS
+                                  #                  #  #     #SWITCH OID
 	switchmodules = getTable("1.3.6.1.4.1.2.3.51.2.22.3.1.1")
 	# The following oid is undocumented, but contains some useful extra info
 	try:
@@ -323,50 +344,146 @@ def check_switchmodules():
 		add_summary("All switchmodules healthy")
 		
 
-def check_blowers():
-	" Check blower status "
-                            #BASE OID
-                            #          #CMM OID
-                            #          #           #BLOWER OID
-	blowers = getTable("1.3.6.1.4.1.2.3.51.2.2.3.50")
+def check_fans():
+	" Check fan status "
+                         #BASE OID
+                         #           #CMM OID
+                         #           #            #FAN OID
+	fans = getTable("1.3.6.1.4.1.2.3.51.2.2.3.50")
 	chassisFanIndex,chassisFanId,chassisFanSpeed,chassisFanState,chassisFanSpeedRPM,chassisFanControllerState,chassisFanCoolingZone = (1,2,3,4,5,6,7)
-	for i in blowers.values():
+	for i in fans.values():
+		debug("i %s" % i)
 		mychassisFanSpeedRPM = i[chassisFanSpeedRPM] 
-		mychassisFanSpeedRPM = mychassisFanSpeedRPM.split(None,1)[0] 
-		add_long( "Blower %s state=%s speed=%s" % (i[chassisFanIndex],i[chassisFanState],i[chassisFanSpeedRPM]) )
-		add_perfdata("Blower%s=%s" %(i[chassisFanIndex],mychassisFanSpeedRPM ))
+		mychassisFanSpeedRPM = mychassisFanSpeedRPM.split(None,1)[0]
+		debug("mychassisFanSpeedRPM %s" % mychassisFanSpeedRPM)
+		if i[chassisFanControllerState] != "2": # not notPresent -> present
+			add_long( "Fan %s state=%s speed=%s" % (i[chassisFanIndex],i[chassisFanState],i[chassisFanSpeedRPM]) )
+			add_perfdata("Fan%s=%s" %(i[chassisFanIndex],mychassisFanSpeedRPM ))
+			# Check fan i
+			if i[chassisFanState] == "1":
+				nagios_status(ok)
+			else:
+				add_summary("Fan%s NOT OK. " % i[chassisFanIndex])
+				nagios_status(warning)
 
-		# Check blower i
-		if i[chassisFanState] == "1":
-			nagios_status(ok)
-#			add_long("Blower%s OK. " % i[chassisFanIndex])
-		else:
-			add_summary("Blower%s NOT OK. " % i[chassisFanIndex])
-			nagios_status(warning)
-#	print "bl : %s " % blowers[1][chassisFanSpeed]
-#	print "bl 1 2 3 4: %s %s %s %s " % (blowers[1][chassisFanState],blowers[2][chassisFanState],blowers[3][chassisFanState],blowers[4][chassisFanState])
-#	print "bl 6 7 8 9: %s %s %s %s " % (blowers[6][chassisFanState],blowers[7][chassisFanState],blowers[8][chassisFanState],blowers[9][chassisFanState])
-#	print "bl 5 10: %s %s " % (blowers[5][chassisFanState],blowers[10][chassisFanState])
+#	num_ok = 0
+#	for i in range(1,4):
+#		if fans[i][chassisFanState] != "1":
+#			num_ok = num_ok + 1
+#	if num_ok > 1:
+#		add_summary("ChassisCoolingZone1 NOT OK. ")
+#		nagios_status(critical)
+#	num_ok = 0
+#	for i in range(6,9):
+#		if fans[i][chassisFanState] != "1":
+#			num_ok = num_ok + 1
+#	if num_ok > 1:
+#		add_summary("ChassisCoolingZone2 NOT OK. ")
+#		nagios_status(critical)
+#	if fans[5][chassisFanState] != "1" or fans[10][chassisFanState] != "1":
+#		add_summary("ChassisCoolingZone 3 and 4 NOT OK. ")
+#		nagios_status(critical)
+
+def check_coolingzones():
+	" Check cooling zone status "
+                         #BASE OID
+                         #           #CMM OID
+                         #           #            #FAN OID
+	fans = getTable("1.3.6.1.4.1.2.3.51.2.2.3.50")
+	chassisFanIndex,chassisFanId,chassisFanSpeed,chassisFanState,chassisFanSpeedRPM,chassisFanControllerState,chassisFanCoolingZone = (1,2,3,4,5,6,7)
+#	for i in fans.values():
+#		debug("i %s" % i)
+#		mychassisFanSpeedRPM = i[chassisFanSpeedRPM] 
+#		mychassisFanSpeedRPM = mychassisFanSpeedRPM.split(None,1)[0]
+#		debug("mychassisFanSpeedRPM %s" % mychassisFanSpeedRPM)
+#		if i[chassisFanControllerState] != "2": # not notPresent -> present
+#			add_long( "Fan %s state=%s speed=%s" % (i[chassisFanIndex],i[chassisFanState],i[chassisFanSpeedRPM]) )
+#			add_perfdata("Fan%s=%s" %(i[chassisFanIndex],mychassisFanSpeedRPM ))
+#			# Check fan i
+#			if i[chassisFanState] == "1":
+#				nagios_status(ok)
+#			else:
+#				add_summary("Fan%s NOT OK. " % i[chassisFanIndex])
+#				nagios_status(warning)
+#
 	num_ok = 0
-#	num_ok = 2
-	for i in range(1,5):
-		if blowers[i][chassisFanState] != "1":
+	for i in range(1,4):
+		if fans[i][chassisFanState] == "2" or fans[i][chassisFanState] == "3":
 			num_ok = num_ok + 1
-	if num_ok > 1:
-		add_summary("FanCoolingZone%s NOT OK. " % blowers[i][chassisFanCoolingZone])
+	if num_ok == 0:
+		add_summary("ChassisCoolingZone1 OK. ")
+		nagios_status(ok)
+	elif num_ok == 1:
+		add_summary("ChassisCoolingZone1 NOT OK. ")
+		nagios_status(warning)
+	else:
+		add_summary("ChassisCoolingZone1 NOT OK. ")
 		nagios_status(critical)
+		
 	num_ok = 0
-#	num_ok = 2
 	for i in range(6,9):
-		if blowers[i][chassisFanState] != "1":
+		if fans[i][chassisFanState] == "2" or fans[i][chassisFanState] == "3":
 			num_ok = num_ok + 1
-        if num_ok > 1:
-		add_summary("FanCoolingZone%s NOT OK. " % blowers[i][chassisFanCoolingZone])
-                nagios_status(critical)
-	if blowers[6][chassisFanState] != "1" and blowers[10][chassisFanState] != "1":
-		add_summary("FanCoolingZone 3 and 4 NOT OK. ")
+	if num_ok == 0:
+		add_summary("ChassisCoolingZone2 OK. ")
+		nagios_status(ok)
+	elif num_ok == 1:
+		add_summary("ChassisCoolingZone2 NOT OK. ")
+		nagios_status(warning)
+	else:
+		add_summary("ChassisCoolingZone2 NOT OK. ")
 		nagios_status(critical)
-	
+
+	if fans[5][chassisFanState] != "1":
+		add_summary("ChassisCoolingZone 3 NOT OK. ")
+		nagios_status(critical)
+	else:
+		add_summary("ChassisCoolingZone 3 OK. ")
+		nagios_status(ok)
+
+	if fans[10][chassisFanState] != "1":
+		add_summary("ChassisCoolingZone 4 NOT OK. ")
+		nagios_status(critical)
+	else:
+		add_summary("ChassisCoolingZone 4 OK. ")
+		nagios_status(ok)
+		
+
+#######TODO STUFF#############
+#                                       #BASE OID
+#                                       #           #CMM OID
+#                                       #           #            #COOLINGZONE OID
+#	ChassisCoolingZone = getTable("1.3.6.1.4.1.2.3.51.2.2.3.51")
+#	chassisCoolingIndex,chassisCoolingZone,chassisCoolingZoneStatus,chassisCoolingZoneComponent = (1,2,3,4)
+#	nok_zone1 = 0
+#	nok_zone2 = 0
+#	for i in ChassisCoolingZone.values():
+#		debug("i %s" % i)
+#		if i[chassisCoolingZoneStatus] == "0" or i[chassisCoolingZoneStatus] == "1":
+#			continue
+#		elif i[chassisCoolingZoneStatus] == "2":
+#			if i[chassisCoolingZone] == 1:
+#				nok_zone1 = nok_zone1 + 1
+#			elif i[chassisCoolingZone] == 2:
+#				nok_zone2 = nok_zone2 + 1
+#		elif i[chassisCoolingZoneStatus] == "3":
+#			if i[chassisCoolingZone] == 1:
+#				nok_zone1 = nok_zone1 + 2
+#			elif i[chassisCoolingZone] == 2:
+#				nok_zone2 = nok_zone2 + 2
+#	
+#	add_long( "ChassisCoolingZone %s state=%s " % (i[chassisCoolingZone],i[chassisCoolingZoneStatus]))
+#	add_summary("ChassisCoolingZone%s OK. " % i[chassisCoolingZoneStatus])
+#	nagios_status(ok)
+#
+#
+#	add_summary("ChassisCoolingZone%s NOT OK. " % i[chassisCoolingZoneStatus])
+#	nagios_status(warning)
+#
+#
+#	add_summary("ChassisCoolingZone%s NOT OK. " % i[chassisCoolingZoneStatus])
+#	nagios_status(critical)
+
 
 def check_chassis_status():
 	chassis = getTable('1.3.6.1.4.1.2.3.51.2.2.5.2')
@@ -436,7 +553,7 @@ def check_chassis_status():
 	else:
 		nagios_status(warning)
 		add_summary( "Switchmodules NOT OK. ")
-	# Check blower status
+	# Check fan status
 	if not oids.has_key(bistBlowersInstalled) or not oids.has_key(bistBlowersFunctional):
 		add_summary( "Blowers N/A. ")
 	elif oids[bistBlowersInstalled] == oids[bistBlowersFunctional]:
@@ -573,8 +690,10 @@ if __name__ == '__main__':
 			check_chassis_status()
 		elif opts.mode == 'bladehealth':
 			check_bladehealth()
-		elif opts.mode == 'blowers':
-			check_blowers()
+		elif opts.mode == 'fans':
+			check_fans()
+		elif opts.mode == 'coolingzones':
+			check_coolingzones()
 		elif opts.mode == 'switchmodules':
 			check_switchmodules()
 		else:
