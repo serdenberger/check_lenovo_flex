@@ -22,7 +22,10 @@ orginal file check_ibm_bladecenter.py renamed and modified by Silvio Erdenberger
 serdenberger [AT] lenovo [POINT] com
 
 version 1.3
- 8.12.2017
+  20. July 2018
+  * tested with CMM firmwarelevel 1.6.0 bld 1AON14A
+  * user report, that newer firmwarelevel not work for the temperature, investigate now
+  8. December 2017
  adding
   * add coolingzone feature
 
