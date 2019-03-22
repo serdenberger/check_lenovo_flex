@@ -1,5 +1,5 @@
 #####################################################################################################################
-[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_password AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode powermodules
+[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_apassword AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode powermodules
 Warning - Powermodule "4" status "2". AC fault. 5 out of 6 powermodules are healthy |  'Number of powermodules'=6
 
 Powersupply "1" status "1". Power module status OK.
@@ -11,7 +11,7 @@ Powersupply "6" status "1". Power module status OK.
 
 [user@nagios]$
 #####################################################################################################################
-[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_password AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode system-health
+[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_apassword AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode system-health
 Warning - Non-Critical Error. Internal proprietary management protocol between I/O module 3 and CMM is offline.. Chassis Management Module reset because of watchdog timeout..  |
 
 * Internal proprietary management protocol between I/O module 3 and CMM is offline..
@@ -19,12 +19,12 @@ Warning - Non-Critical Error. Internal proprietary management protocol between I
 
 [user@nagios]$
 #####################################################################################################################
-[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_password AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode temperature
+[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_apassword AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode temperature
 OK - Ambient temperature = 20.00 Centigrade.  |  'ambient_temp'=20.0;28;35
 
 [user@nagios]$
 #####################################################################################################################
-[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_password AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode chassis-status
+[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_apassword AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode chassis-status
 OK - Blades OK. PowerModules OK. Switchmodules OK. Blowers OK. Media Trays OK. Other Sensors: OK.  |
 
 Other Sensors:
@@ -43,7 +43,7 @@ Other Sensors:
 
 [user@nagios]$ 
 #####################################################################################################################
-[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_password AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode bladehealth
+[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_apassword AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode bladehealth
 OK - 11 out of 11 blades in Good health.  |
 
 blade1 (Node 01 (no-f1b01-x240)): Good (No critical or warning events)
@@ -60,7 +60,7 @@ blade13 (Node 13 (no-f1b13-x440)): Good (No critical or warning events)
 
 [user@nagios]$ 
 #####################################################################################################################
-[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_password AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode blowers
+[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_apassword AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode blowers
 
 Warning - Blower1 OK. Blower2 OK. Blower3 OK. Blower4 NOT OK. Blower5 OK. Blower6 OK. Blower7 OK. Blower8 OK. Blower9 OK. Blower10 OK.  |  blower1=4096  blower2=4096  blower3=3392  blower4=0  blower5=8704  blower6=3328  blower7=3264  blower8=4096  blower9=4096  blower10=8832
 
@@ -77,7 +77,7 @@ Blower 10 state=1 speed=8832
 
 [user@nagios]$ 
 #####################################################################################################################
-[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_password AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode switchmodules
+[user@nagios]$ python check_lenovo_flex.py  -H 192.168.18.20 --snmp_version 3 --snmp_username snmpv3 --snmp_aprotocol=SHA --snmp_apassword AuthPW --snmp_security_level authPriv --snmp_pprotocol AES --snmp_ppassword PrivPW --mode switchmodules
 Warning - Problem with Module 3.  |
 
 Module1 health good.
